@@ -89,3 +89,7 @@ npm run build
 ## Especificaciones
 
 El proyecto sigue desarrollo dirigido por especificaciones. Las reglas estables están en `constitution/` y cada feature documenta comportamiento, plan, tareas y revisión en `features/NNN-nombre-feature/`.
+
+## Arquitectura
+
+La explicación del sistema y sus diagramas de componentes, despliegue, autenticación, CRUD, dashboard y base de datos están en [`docs/architecture.md`](docs/architecture.md).
