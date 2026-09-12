@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  TRAINER
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  OVERDUE
+}
+
+enum PlanType {
+  CLASSIC
+  TOTAL
+  PERSONALIZED
+  CLASSES
+}
+
+enum MembershipStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum PaymentConcept {
+  FEE
+  PLAN
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(TRAINER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Member {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  phone       String?
+  joinedAt    DateTime
+  status      MemberStatus @default(ACTIVE)
+  planId      String?
+  plan        Plan?        @relation(fields: [planId], references: [id], onDelete: SetNull)
+  memberships Membership[]
+  checkIns     CheckIn[]
+  payments     Payment[]
+  contracts    Contract[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([status])
+  @@index([planId])
+}
+
+model Contract {
+  id        String         @id @default(cuid())
+  memberId  String
+  startsAt  DateTime
+  endsAt    DateTime?
+  status    ContractStatus @default(ACTIVE)
+  notes     String?
+  member    Member         @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([memberId])
+  @@index([status])
+}
+
+model Plan {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  monthlyPrice Decimal      @db.Decimal(10, 2)
+  type         PlanType
+  members      Member[]
+  memberships  Membership[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Membership {
+  id        String           @id @default(cuid())
+  memberId  String
+  planId    String
+  startsAt  DateTime
+  endsAt    DateTime?
+  status    MembershipStatus @default(ACTIVE)
+  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  plan      Plan             @relation(fields: [planId], references: [id], onDelete: Restrict)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([memberId])
+  @@index([planId])
+  @@index([status])
+}
+
+model CheckIn {
+  id        String    @id @default(cuid())
+  memberId  String
+  enteredAt DateTime
+  leftAt    DateTime?
+  member    Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@index([memberId])
+  @@index([enteredAt])
+  @@index([enteredAt, leftAt])
+}
+
+model Payment {
+  id        String         @id @default(cuid())
+  memberId  String
+  amount    Decimal        @db.Decimal(10, 2)
+  concept   PaymentConcept
+  paidAt    DateTime
+  method    PaymentMethod
+  member    Member         @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  createdAt DateTime       @default(now())
+
+  @@index([memberId])
+  @@index([paidAt])
+}

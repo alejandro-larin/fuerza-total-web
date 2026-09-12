@@ -1,0 +1,11 @@
+import { EntityForm } from "@/components/management/entity-form";
+import { Field, SelectField } from "@/components/management/fields";
+import { RecordList } from "@/components/management/record-list";
+import { saveEmployee } from "@/lib/management/actions";
+import { prisma } from "@/lib/prisma";
+
+export default async function EmployeesPage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
+  const { edit } = await searchParams; const [records, current] = await Promise.all([prisma.user.findMany({ orderBy:{name:"asc"} }), edit ? prisma.user.findUnique({where:{id:edit}}) : null]);
+  return <Page title="Empleados" description="Cuentas internas y permisos del equipo."><EntityForm action={saveEmployee}><input type="hidden" name="id" value={current?.id ?? ""}/><Field label="Nombre" name="name" defaultValue={current?.name}/><Field label="Correo" name="email" type="email" defaultValue={current?.email}/><SelectField label="Rol" name="role" defaultValue={current?.role} options={[["TRAINER","Entrenador"],["OWNER","Gerencia"]]}/><Field label={current ? "Nueva contraseña (opcional)" : "Contraseña inicial"} name="password" type="password" required={!current}/></EntityForm><RecordList kind="employee" rows={records.map(x=>({id:x.id,title:x.name,details:`${x.email} · ${x.role === "OWNER" ? "Gerencia" : "Entrenador"}`}))}/></Page>;
+}
+function Page({title,description,children}:{title:string;description:string;children:React.ReactNode}){return <><header className="mb-8 border-b-2 border-[var(--ink)] pb-6"><h1 className="font-display text-5xl font-extrabold">{title}</h1><p className="mt-2 text-[var(--muted)]">{description}</p></header><div className="space-y-6">{children}</div></>}

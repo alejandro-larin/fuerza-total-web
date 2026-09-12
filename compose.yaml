@@ -1,0 +1,46 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://fuerza_total:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/fuerza_total?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
+      AUTH_URL: ${AUTH_URL:-http://localhost:${WEB_PORT:-3000}}
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
+      GYM_TIME_ZONE: ${GYM_TIME_ZONE:-Europe/Madrid}
+      GYM_CURRENCY: ${GYM_CURRENCY:-EUR}
+      SEED_OWNER_EMAIL: ${SEED_OWNER_EMAIL:?Set SEED_OWNER_EMAIL in .env}
+      SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:?Set SEED_OWNER_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/login >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fuerza_total
+      POSTGRES_USER: fuerza_total
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fuerza_total -d fuerza_total"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
