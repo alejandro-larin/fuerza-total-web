@@ -13,3 +13,8 @@
 - [x] Validar login y CRUD en navegador.
 - [x] Ejecutar lint, tests y build.
 - [x] Validar criterios de aceptación y actualizar roadmap.
+- [x] Migrar DUI, contacto de emergencia y referencias de documentos médicos.
+- [x] Implementar almacenamiento y descarga privada de PDF.
+- [x] Actualizar formularios y listados de clientes y empleados.
+- [x] Cambiar la moneda predeterminada a USD.
+- [x] Probar migración, archivos, CRUD, lint y build.

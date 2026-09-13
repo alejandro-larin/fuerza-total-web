@@ -9,7 +9,7 @@ _Versiones comprobadas contra el registro npm y la documentación oficial (septi
 - **Lenguaje:** TypeScript estricto (`strict: true`; sin `any` silencioso).
 - **Framework / runtime:** Next.js 16 (App Router) + React 19, Node 24 LTS (Next.js 16 requiere Node ≥ 20.9).
 - **Base de datos:** PostgreSQL 18 con **Prisma ORM 7** (v8 en RC). En desarrollo corre en Docker Compose (`docker compose up -d db`).
-- **UI:** Tailwind CSS 4.3 + **shadcn/ui** (Radix) — componentes: Card, Table, Badge, Tabs, Sidebar, Avatar.
+- **UI:** Tailwind CSS 4.3 + **shadcn/ui** (Radix) — componentes: Card, Table, Badge, Tabs, Sidebar, Avatar. Moneda operativa predeterminada: USD.
 - **Auth y roles:** Auth.js v5 (`next-auth@5`, en beta) con credenciales; sesiones con roles `OWNER` (dueño/gerente) y `TRAINER` (entrenador).
 - **Validación:** zod 4 en el borde (forms y payloads de API).
 - **Tests:** Vitest 5 + React Testing Library. Archivos co-locados: `foo.ts` + `foo.test.ts`.
@@ -48,6 +48,7 @@ _Las entidades o estructuras centrales y sus campos/reglas. Documenta solo lo no
 - **Membership (membresía)** — relación socio↔plan: `id`, `memberId`, `planId`, `inicio`, `fin`, `estado` (`activa|pausada|cancelada`).
 - **CheckIn (asistencia)** — registro de entrada/salida: `id`, `memberId`, `entradaAt`, `salidaAt`. Fuente de las métricas de asistencia.
 - **Payment (pago)** — cobro registrado: `id`, `memberId`, `importe`, `concepto` (`cuota|plan`), `fecha`, `metodo` (`efectivo|tarjeta|transferencia`). Fuente de ingresos. No procesa pagos reales en MVP.
+- **Documentos médicos** — PDF privado de hasta 5 MB asociado a empleado o cliente; el archivo vive en almacenamiento privado y PostgreSQL conserva solo su referencia opaca.
 
 ## Convenciones
 

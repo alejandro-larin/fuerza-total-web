@@ -13,6 +13,9 @@ Implementar un módulo protegido con Server Components y Server Actions. Cada se
 5. Implementar formularios y listados para empleados, clientes, contratos, membresías, pagos y accesos.
 6. Revalidar `/gestion` y `/dashboard` tras cada cambio.
 7. Añadir pruebas de validación y operaciones críticas; verificar login, CRUD y responsive en navegador.
+8. Extender empleados y clientes con DUI y una referencia privada al PDF médico; añadir contacto de emergencia para clientes.
+9. Guardar PDFs fuera de `public/`, con validación de tamaño, MIME y firma, y servirlos mediante una ruta autorizada.
+10. Cambiar la moneda operativa predeterminada a USD.
 
 ## Decisiones
 
@@ -21,6 +24,7 @@ Implementar un módulo protegido con Server Components y Server Actions. Cada se
 - **Eliminaciones restringidas** — no se elimina un cliente o plan con datos financieros relacionados; se presenta un error legible.
 - **Contratos separados de membresías** — el contrato representa el acuerdo comercial; la membresía representa el acceso activo a un plan.
 - **Server Actions** — reducen superficie pública y validan autorización cerca de la mutación.
+- **Documentos médicos privados** — el archivo vive en un volumen no público; PostgreSQL conserva únicamente un identificador opaco y el nombre original.
 
 ## Riesgos
 

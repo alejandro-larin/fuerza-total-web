@@ -72,11 +72,14 @@ En desarrollo, `DATABASE_URL` debe usar el host y puerto publicados, por defecto
 | `AUTH_URL` | URL pública canónica de la aplicación. |
 | `AUTH_TRUST_HOST` | Permite a Auth.js confiar en el host del despliegue/proxy. |
 | `GYM_TIME_ZONE` | Zona horaria de métricas y formularios. |
-| `GYM_CURRENCY` | Moneda ISO mostrada por la aplicación. |
+| `GYM_CURRENCY` | Moneda ISO mostrada por la aplicación; por defecto `USD`. |
+| `PRIVATE_UPLOAD_DIR` | Directorio privado para los PDF de notas médicas. |
 | `SEED_OWNER_EMAIL` | Correo inicial del dueño. |
 | `SEED_OWNER_PASSWORD` | Contraseña inicial del dueño, mínimo 12 caracteres. |
 
 No publiques `.env`; solo `.env.example` pertenece al repositorio.
+
+Los documentos médicos se almacenan fuera de `public/` y solo se descargan mediante una ruta autenticada para `OWNER`. Docker Compose los conserva en el volumen `private_uploads`. Cada archivo debe ser un PDF válido de hasta 5 MB.
 
 ## Validación
 

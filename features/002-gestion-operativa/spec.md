@@ -24,10 +24,14 @@ Permite a gerencia crear, consultar, editar y eliminar empleados, clientes, cont
 - [x] Los cambios actualizan inmediatamente los listados y las métricas del dashboard.
 - [x] El módulo funciona desde 320 px sin desplazamiento horizontal de página.
 - [x] Los formularios y acciones son accesibles por teclado y tienen etiquetas explícitas.
+- [x] Clientes registran DUI, contacto telefónico de emergencia y notas médicas en PDF.
+- [x] Empleados registran DUI y notas médicas en PDF.
+- [x] Los documentos médicos son privados, admiten solo PDF de hasta 5 MB y requieren rol `OWNER` para consultarlos.
+- [x] La interfaz presenta importes en dólares estadounidenses.
 
 ## Fuera de alcance
 
 - Procesamiento automático de cobros.
-- Firma digital de contratos o almacenamiento de documentos.
+- Firma digital de contratos o almacenamiento de documentos distintos a notas médicas.
 - Registro o autoservicio para clientes.
 - Horarios, nóminas y asignación de entrenadores.

@@ -17,6 +17,7 @@ flowchart LR
         D --> O
         G --> O
         G --> V[Zod + Server Actions]
+        G --> F[Documentos médicos privados]
         D --> M[Servicio de métricas]
     end
 
@@ -24,6 +25,7 @@ flowchart LR
     V --> P
     M --> P
     P --> DB[(PostgreSQL 18)]
+    F --> FS[(Volumen privado)]
 ```
 
 La aplicación es un monolito modular de Next.js. La interfaz, las Server Actions, la autenticación y las consultas de negocio se despliegan juntas; PostgreSQL es el único servicio de persistencia.
@@ -59,6 +61,7 @@ flowchart LR
 
     subgraph Docker Compose
         W -->|db:5432| DB[(Contenedor PostgreSQL 18)]
+        W --> UP[(private_uploads)]
         DB --> VOL[(postgres_data)]
     end
 
@@ -159,7 +162,31 @@ sequenceDiagram
     end
 ```
 
-Las entidades gestionadas son empleados (`User`), clientes (`Member`), contratos, membresías, pagos y accesos. Las contraseñas se almacenan como hashes bcrypt; nunca se devuelve el hash a la interfaz.
+Las entidades gestionadas son empleados (`User`), clientes (`Member`), contratos, membresías, pagos y accesos. Empleados y clientes admiten DUI y un PDF privado de notas médicas; los clientes también registran un teléfono de emergencia. Las contraseñas se almacenan como hashes bcrypt; nunca se devuelve el hash a la interfaz.
+
+### Documentos médicos
+
+```mermaid
+sequenceDiagram
+    actor O as OWNER
+    participant A as Server Action
+    participant V as Validador de archivo
+    participant FS as Volumen privado
+    participant DB as PostgreSQL
+    participant R as Ruta protegida
+
+    O->>A: Adjunta notas médicas
+    A->>V: Comprueba MIME, firma PDF y máximo 5 MB
+    V->>FS: Guarda con UUID y permisos privados
+    A->>DB: Guarda clave opaca y nombre original
+    O->>R: Solicita ver documento
+    R->>R: requireOwner()
+    R->>DB: Obtiene la clave interna
+    R->>FS: Lee el PDF
+    R-->>O: application/pdf + no-store + nosniff
+```
+
+Los PDFs nunca se guardan en `public/` ni en PostgreSQL. El volumen `private_uploads` mantiene los documentos al recrear los contenedores.
 
 ## Dashboard
 
@@ -193,6 +220,9 @@ erDiagram
         string email UK
         string passwordHash
         Role role
+        string dui UK
+        string medicalNotesKey
+        string medicalNotesName
     }
 
     MEMBER {
@@ -202,6 +232,10 @@ erDiagram
         string phone
         MemberStatus status
         string planId FK
+        string dui UK
+        string emergencyPhone
+        string medicalNotesKey
+        string medicalNotesName
     }
 
     PLAN {
@@ -263,6 +297,8 @@ erDiagram
 - Zod valida las entradas antes de acceder a Prisma.
 - Prisma parametriza las operaciones SQL.
 - Las restricciones de PostgreSQL impiden eliminar pagos, contratos o planes cuando la relación usa `Restrict`.
+- Los documentos médicos se sirven con autorización `OWNER`, `Cache-Control: private, no-store` y `X-Content-Type-Options: nosniff`.
+- Los importes se presentan en dólares estadounidenses (`USD`) salvo configuración explícita distinta.
 
 ## Directorios principales
 
