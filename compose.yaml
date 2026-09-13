@@ -13,7 +13,8 @@ services:
       AUTH_URL: ${AUTH_URL:-http://localhost:${WEB_PORT:-3000}}
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
       GYM_TIME_ZONE: ${GYM_TIME_ZONE:-Europe/Madrid}
-      GYM_CURRENCY: ${GYM_CURRENCY:-EUR}
+      GYM_CURRENCY: ${GYM_CURRENCY:-USD}
+      PRIVATE_UPLOAD_DIR: /app/data/uploads
       SEED_OWNER_EMAIL: ${SEED_OWNER_EMAIL:?Set SEED_OWNER_EMAIL in .env}
       SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:?Set SEED_OWNER_PASSWORD in .env}
     ports:
@@ -24,6 +25,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+    volumes:
+      - private_uploads:/app/data/uploads
 
   db:
     image: postgres:18-alpine
@@ -44,3 +47,4 @@ services:
 
 volumes:
   postgres_data:
+  private_uploads:

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # generated Prisma client
 /generated/prisma
+
+# private uploads
+/.data/

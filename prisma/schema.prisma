@@ -54,6 +54,9 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role     @default(TRAINER)
+  dui          String?  @unique
+  medicalNotesKey  String?
+  medicalNotesName String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -63,6 +66,10 @@ model Member {
   name        String
   email       String       @unique
   phone       String?
+  dui         String?      @unique
+  emergencyPhone String?
+  medicalNotesKey  String?
+  medicalNotesName String?
   joinedAt    DateTime
   status      MemberStatus @default(ACTIVE)
   planId      String?

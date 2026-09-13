@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireOwner } from "@/lib/auth/require-owner";
 import { prisma } from "@/lib/prisma";
+import { deleteMedicalDocument, saveMedicalDocument } from "@/lib/medical-documents";
 
 export type ActionState = { error?: string; success?: string };
 
@@ -15,6 +16,11 @@ const optionalDate = z.string().date().or(z.literal(""));
 
 function text(formData: FormData, name: string) {
   return formData.get(name)?.toString() ?? "";
+}
+
+function file(formData: FormData, name: string) {
+  const value = formData.get(name);
+  return value instanceof File ? value : null;
 }
 
 function refresh() {
@@ -48,25 +54,39 @@ const employeeSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().toLowerCase().email(),
   role: z.enum(["OWNER", "TRAINER"]),
+  dui: z.string().trim().min(3).max(30).or(z.literal("")),
   password: z.string().min(12).max(128).or(z.literal("")),
 });
 
 export async function saveEmployee(_: ActionState, formData: FormData) {
-  const data = employeeSchema.parse({ id: text(formData, "id"), name: text(formData, "name"), email: text(formData, "email"), role: text(formData, "role"), password: text(formData, "password") });
+  const data = employeeSchema.parse({ id: text(formData, "id"), name: text(formData, "name"), email: text(formData, "email"), role: text(formData, "role"), dui: text(formData, "dui"), password: text(formData, "password") });
   if (!data.id && !data.password) return { error: "La contraseña inicial es obligatoria." };
   return run(async () => {
+    const document = await saveMedicalDocument(file(formData, "medicalNotes") ?? new File([], ""));
     if (data.id) {
-      await prisma.user.update({ where: { id: data.id }, data: { name: data.name, email: data.email, role: data.role, ...(data.password ? { passwordHash: await hash(data.password, 12) } : {}) } });
+      const previous = document ? await prisma.user.findUnique({ where: { id: data.id }, select: { medicalNotesKey: true } }) : null;
+      await prisma.user.update({ where: { id: data.id }, data: { name: data.name, email: data.email, role: data.role, dui: data.dui || null, ...(data.password ? { passwordHash: await hash(data.password, 12) } : {}), ...(document ? { medicalNotesKey: document.key, medicalNotesName: document.name } : {}) } });
+      await deleteMedicalDocument(previous?.medicalNotesKey);
     } else {
-      await prisma.user.create({ data: { name: data.name, email: data.email, role: data.role, passwordHash: await hash(data.password, 12) } });
+      await prisma.user.create({ data: { name: data.name, email: data.email, role: data.role, dui: data.dui || null, passwordHash: await hash(data.password, 12), medicalNotesKey: document?.key, medicalNotesName: document?.name } });
     }
   }, "Empleado guardado.");
 }
 
-const memberSchema = z.object({ id: optionalId, name: z.string().trim().min(2).max(100), email: z.string().trim().toLowerCase().email(), phone: z.string().trim().max(30), status: z.enum(["ACTIVE", "INACTIVE", "OVERDUE"]), planId: optionalId });
+const memberSchema = z.object({ id: optionalId, name: z.string().trim().min(2).max(100), email: z.string().trim().toLowerCase().email(), phone: z.string().trim().max(30), dui: z.string().trim().min(3).max(30).or(z.literal("")), emergencyPhone: z.string().trim().min(7).max(30).or(z.literal("")), status: z.enum(["ACTIVE", "INACTIVE", "OVERDUE"]), planId: optionalId });
 export async function saveMember(_: ActionState, formData: FormData) {
-  const data = memberSchema.parse({ id: text(formData, "id"), name: text(formData, "name"), email: text(formData, "email"), phone: text(formData, "phone"), status: text(formData, "status"), planId: text(formData, "planId") });
-  return run(() => data.id ? prisma.member.update({ where: { id: data.id }, data: { name: data.name, email: data.email, phone: data.phone || null, status: data.status, planId: data.planId || null } }) : prisma.member.create({ data: { name: data.name, email: data.email, phone: data.phone || null, status: data.status, planId: data.planId || null, joinedAt: new Date() } }), "Cliente guardado.");
+  const data = memberSchema.parse({ id: text(formData, "id"), name: text(formData, "name"), email: text(formData, "email"), phone: text(formData, "phone"), dui: text(formData, "dui"), emergencyPhone: text(formData, "emergencyPhone"), status: text(formData, "status"), planId: text(formData, "planId") });
+  return run(async () => {
+    const document = await saveMedicalDocument(file(formData, "medicalNotes") ?? new File([], ""));
+    const values = { name: data.name, email: data.email, phone: data.phone || null, dui: data.dui || null, emergencyPhone: data.emergencyPhone || null, status: data.status, planId: data.planId || null, ...(document ? { medicalNotesKey: document.key, medicalNotesName: document.name } : {}) };
+    if (data.id) {
+      const previous = document ? await prisma.member.findUnique({ where: { id: data.id }, select: { medicalNotesKey: true } }) : null;
+      await prisma.member.update({ where: { id: data.id }, data: values });
+      await deleteMedicalDocument(previous?.medicalNotesKey);
+    } else {
+      await prisma.member.create({ data: { ...values, joinedAt: new Date() } });
+    }
+  }, "Cliente guardado.");
 }
 
 const contractSchema = z.object({ id: optionalId, memberId: idSchema, startsAt: z.string().date(), endsAt: optionalDate, status: z.enum(["ACTIVE", "EXPIRED", "CANCELLED"]), notes: z.string().trim().max(1000) });
